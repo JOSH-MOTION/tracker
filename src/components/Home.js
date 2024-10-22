@@ -1,7 +1,10 @@
+// Home.js
 import { useEffect, useState } from "react";
 import { collection, addDoc, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../firebase"; // Ensure the path to firebase.js is correct
 import Chart from "./Chart";
+import { signOut } from "firebase/auth"; // Import signOut from Firebase auth
+import { auth } from "../firebase"; // Import auth from firebase.js
 
 const categoryColors = {
   Food: 'rgba(255, 99, 132, 0.5)',
@@ -23,16 +26,19 @@ const Home = ({ user }) => {
   const [salary, setSalary] = useState("");
 
   useEffect(() => {
-    // Check if user is authenticated
     if (!user) {
       return; // Exit early if user is not logged in
     }
 
+    // Fetch transactions for the logged-in user
     const unsub = onSnapshot(collection(db, "transactions"), (snapshot) => {
-      const newTransactions = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const newTransactions = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((transaction) => transaction.userId === user.uid); // Filter by user ID
+
       setTransactions(newTransactions);
 
       const totalExp = newTransactions
@@ -45,9 +51,9 @@ const Home = ({ user }) => {
         .reduce((acc, transaction) => acc + transaction.amount, 0);
       setTotalIncome(totalInc);
     });
-    
+
     return () => unsub();
-  }, [user]); // Add user as a dependency to re-run effect when user changes
+  }, [user]);
 
   const addTransaction = async (e) => {
     e.preventDefault();
@@ -62,34 +68,33 @@ const Home = ({ user }) => {
     selectedDate.setMinutes(currentTime.getMinutes());
     selectedDate.setSeconds(currentTime.getSeconds());
 
-    // Ensure amount is a valid number
     const parsedAmount = type === "Income" ? parseFloat(salary) : parseFloat(amount);
     if (isNaN(parsedAmount)) {
-        console.error("Invalid amount provided:", type === "Income" ? salary : amount);
-        return; // Exit early if the amount is not a valid number
+      console.error("Invalid amount provided:", type === "Income" ? salary : amount);
+      return; // Exit early if the amount is not a valid number
     }
 
     try {
-        await addDoc(collection(db, "transactions"), {
-            amount: parsedAmount, // Use the parsed amount
-            category: type === "Income" ? "Income" : category,
-            description,
-            createdAt: selectedDate,
-            type,
-        });
+      await addDoc(collection(db, "transactions"), {
+        amount: parsedAmount,
+        category: type === "Income" ? "Income" : category,
+        description,
+        createdAt: selectedDate,
+        type,
+        userId: user.uid, // Store user ID for tracking transactions
+      });
 
-        // Reset form fields
-        setAmount("");
-        setDescription("");
-        setDate("");
-        setType("Expense");
-        setSalary("");
+      // Reset form fields
+      setAmount("");
+      setDescription("");
+      setDate("");
+      setType("Expense");
+      setSalary("");
     } catch (error) {
-        console.error("Error adding transaction:", error);
+      console.error("Error adding transaction:", error);
     }
-};
+  };
 
-  
   const deleteTransaction = async (id) => {
     try {
       await deleteDoc(doc(db, "transactions", id));
@@ -98,10 +103,18 @@ const Home = ({ user }) => {
     }
   };
 
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   // Prepare data for the chart
   const talliedData = transactions.reduce((acc, transaction) => {
     const category = transaction.type === "Income" ? "Income" : transaction.category;
-    
+
     if (!acc[category]) {
       acc[category] = { income: 0, expenses: 0 };
     }
@@ -127,10 +140,19 @@ const Home = ({ user }) => {
         labels={labels}
         incomeData={incomeData}
         expenseData={expenseData}
-        categoryColors={categoryColors} // Pass colors to the Chart component
+        categoryColors={categoryColors}
       />
 
       <div className="max-w-xl mx-auto py-8">
+        {user && (
+          <button
+            onClick={logout}
+            className="mb-4 bg-red-500 text-white py-2 px-4 rounded-md"
+          >
+            Logout
+          </button>
+        )}
+
         <h2 className="text-3xl font-bold mb-6 text-center">Expense Tracker</h2>
         {user ? (
           <>
@@ -178,7 +200,6 @@ const Home = ({ user }) => {
                 <option value="Transport">Transport</option>
                 <option value="Entertainment">Entertainment</option>
                 <option value="Other">Other</option>
-                {/* Additional categories can be added here */}
               </select>
               <select
                 value={type}
@@ -197,8 +218,9 @@ const Home = ({ user }) => {
             </form>
 
             <div className="mb-6">
-              <h2 className="text-xl font-bold">Total Expenses: ${totalExpenses}</h2>
               <h2 className="text-xl font-bold">Total Income: ${totalIncome}</h2>
+              <h2 className="text-xl font-bold">Total Expenses: ${totalExpenses}</h2>
+              <h2 className="text-xl font-bold">Net Balance: ${totalIncome - totalExpenses}</h2>
             </div>
 
             <h2 className="text-2xl font-semibold mb-4">Transactions</h2>
@@ -218,7 +240,7 @@ const Home = ({ user }) => {
             </ul>
           </>
         ) : (
-          <p>Please sign in to view and add transactions.</p>
+          <p className="text-center">Please log in to view and add transactions.</p>
         )}
       </div>
     </div>

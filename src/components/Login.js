@@ -12,11 +12,23 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Basic email validation
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!isValidEmail) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    console.log("Attempting to sign in with:", { email, password });
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       navigate("/"); // Redirect to home page after successful login
     } catch (error) {
-      setError(error.message);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      setError("Error logging in: " + error.message);
     }
   };
 
@@ -54,9 +66,8 @@ const Login = () => {
           </button>
         </form>
         <p className="text-center mt-4">
-  Don't have an account? <Link to="/signup" className="text-blue-500">Sign Up</Link>
-</p>
-
+          Don't have an account? <Link to="/signup" className="text-blue-500">Sign Up</Link>
+        </p>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-// src/components/Chart.js
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useEffect, useState } from 'react';
@@ -7,13 +6,23 @@ import { db } from '../firebase';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// Define category colors here
+// Predefined category colors
 const categoryColors = {
   Income: '#28a745', // Green for Income
   Expense: '#dc3545', // Red for Expense
-  Transport: '#17a2b8', // Example category color
-  Food: '#ffc107', // Example category color
-  // Add more categories and their colors as needed
+  Transport: '#17a2b8', // Blue for Transport
+  Food: '#ffc107', // Yellow for Food
+  // Add more categories as needed or leave undefined for dynamic coloring
+};
+
+// Function to generate random color for undefined categories
+const getRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
 };
 
 const Chart = () => {
@@ -23,7 +32,7 @@ const Chart = () => {
       {
         label: 'Income and Expenses',
         data: [],
-        backgroundColor: [], // This will hold the colors for the chart
+        backgroundColor: [], // Dynamic background colors
       },
     ],
   });
@@ -34,64 +43,54 @@ const Chart = () => {
       const talliedData = {};
 
       transactions.forEach((transaction) => {
-        // Ensure createdAt is a valid date
         const createdAt = transaction.createdAt;
         const date = createdAt instanceof Date ? createdAt : new Date(createdAt.seconds * 1000);
-
+      
         if (isNaN(date)) {
           console.error(`Invalid date for transaction: ${transaction.id}`);
-          return; // Skip this transaction if the date is invalid
+          return;
         }
-
+      
         const month = date.toLocaleString('default', { month: 'long' });
-        const category = transaction.category || 'Uncategorized'; // Use a default if no category is provided
-
-        // Create a unique key for each month and category combination
+        const category = transaction.category || 'Uncategorized';
         const key = `${month}-${category}`;
-
+      
         if (!talliedData[key]) {
           talliedData[key] = { income: 0, expenses: 0 };
         }
-
-        // Validate transaction.amount to ensure it's a number
+      
         const amount = parseFloat(transaction.amount);
         if (isNaN(amount)) {
-          console.warn(`Invalid amount for transaction: ${transaction.id}, amount: ${transaction.amount}`);
-          return; // Skip this transaction if the amount is invalid
+          console.warn(`Invalid amount for transaction: ${transaction.id}`);
+          return;
         }
-
-        // Tally income or expenses
+      
         if (transaction.type === "Income") {
           talliedData[key].income += amount;
+          console.log(`Income added: ${amount} to ${key}`);
         } else if (transaction.type === "Expense") {
           talliedData[key].expenses += amount;
+          console.log(`Expense added: ${amount} to ${key}`);
         } else {
-          console.warn(`Invalid transaction type for transaction: ${transaction.id}, type: ${transaction.type}`);
+          console.warn(`Invalid transaction type: ${transaction.type}`);
         }
       });
 
-      // Debugging: Log talliedData to verify values
-      console.log('Tallied Data:', talliedData);
-
-      // Safely create labels, incomeData, and expenseData arrays
+      // Extracting labels and data
       const labels = Object.keys(talliedData);
       const incomeData = labels.map((label) => talliedData[label]?.income || 0); // Default to 0 if undefined
       const expenseData = labels.map((label) => talliedData[label]?.expenses || 0); // Default to 0 if undefined
 
-      // Debugging: Log incomeData and expenseData to verify values
-      console.log('Income Data:', incomeData);
-      console.log('Expense Data:', expenseData);
-
       // Combine income and expense data for the chart
       const chartData = [...incomeData, ...expenseData];
 
-      // Generate colors for each category based on the predefined category colors
+      // Assign colors to each category (using predefined or random color)
       const colors = labels.map(label => {
-        const category = label.split('-')[1]; // Extract the category from the key
-        return categoryColors[category] || '#6c757d'; // Default color if category not found
+        const category = label.split('-')[1]; // Extract category from the key
+        return categoryColors[category] || getRandomColor(); // Use random color if category not found
       });
 
-      // Set the data for the chart
+      // Update chart data
       setData({
         labels: labels, // Include both month and category in labels
         datasets: [
@@ -105,9 +104,9 @@ const Chart = () => {
     });
 
     return () => unsubscribe();
-  }, []); // Removed user dependency
+  }, []);
 
-  // Chart options for controlling size
+  // Chart options for controlling size and responsiveness
   const options = {
     responsive: true,
     maintainAspectRatio: false, // Set to false to allow custom sizing
