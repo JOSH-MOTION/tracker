@@ -24,6 +24,7 @@ const Home = ({ user }) => {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
   const [salary, setSalary] = useState("");
+  const [showForm, setShowForm] = useState(false); // State to toggle form visibility
 
   useEffect(() => {
     if (!user) {
@@ -90,6 +91,7 @@ const Home = ({ user }) => {
       setDate("");
       setType("Expense");
       setSalary("");
+      setShowForm(false); // Hide form after submission
     } catch (error) {
       console.error("Error adding transaction:", error);
     }
@@ -133,29 +135,41 @@ const Home = ({ user }) => {
   const expenseData = labels.map((label) => talliedData[label].expenses);
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
+    <div className="min-h-screen p-6 bg-gray-100 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-4">Welcome, {user ? user.email : "Guest"}</h1>
 
-      <Chart 
-        labels={labels}
-        incomeData={incomeData}
-        expenseData={expenseData}
-        categoryColors={categoryColors}
-      />
+      <div className="flex items-center justify-center w-full mb-8">
+        <Chart 
+          labels={labels}
+          incomeData={incomeData}
+          expenseData={expenseData}
+          categoryColors={categoryColors}
+        />
+        <div className="ml-8">
+          <h2 className="text-xl font-bold">Total Income: ${totalIncome}</h2>
+          <h2 className="text-xl font-bold">Total Expenses: ${totalExpenses}</h2>
+          <h2 className="text-xl font-bold">Net Balance: ${totalIncome - totalExpenses}</h2>
+        </div>
+      </div>
 
       <div className="max-w-xl mx-auto py-8">
-        {user && (
+        {user && !showForm && (
           <button
-            onClick={logout}
-            className="mb-4 bg-red-500 text-white py-2 px-4 rounded-md"
+            onClick={() => setShowForm(true)}
+            className="mb-4 bg-blue-500 text-white py-2 px-4 rounded-md"
           >
-            Logout
+            Add Transaction
           </button>
         )}
 
-        <h2 className="text-3xl font-bold mb-6 text-center">Expense Tracker</h2>
-        {user ? (
+        {showForm && (
           <>
+            <button
+              onClick={() => setShowForm(false)}
+              className="mb-4 bg-red-500 text-white py-2 px-4 rounded-md"
+            >
+              Close Form
+            </button>
             <form onSubmit={addTransaction} className="mb-6">
               {type === "Income" ? (
                 <>
@@ -211,38 +225,37 @@ const Home = ({ user }) => {
               </select>
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white py-2 rounded-md"
+                className="w-full bg-green-500 text-white py-2 rounded-md"
               >
                 Add Transaction
               </button>
             </form>
-
-            <div className="mb-6">
-              <h2 className="text-xl font-bold">Total Income: ${totalIncome}</h2>
-              <h2 className="text-xl font-bold">Total Expenses: ${totalExpenses}</h2>
-              <h2 className="text-xl font-bold">Net Balance: ${totalIncome - totalExpenses}</h2>
-            </div>
-
-            <h2 className="text-2xl font-semibold mb-4">Transactions</h2>
-            <ul>
-              {transactions.map((transaction) => (
-                <li key={transaction.id} className="mb-3 p-4 bg-white rounded-md shadow">
-                  <p>{transaction.description} - {transaction.type}</p>
-                  <p>${transaction.amount} - {transaction.category} on {new Date(transaction.createdAt.seconds * 1000).toLocaleString()}</p>
-                  <button
-                    onClick={() => deleteTransaction(transaction.id)}
-                    className="mt-2 text-red-500 hover:text-red-700"
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
           </>
-        ) : (
-          <p className="text-center">Please log in to view and add transactions.</p>
         )}
+
+        <h2 className="text-2xl font-semibold mb-4">Transactions</h2>
+        <ul>
+          {transactions.map((transaction) => (
+            <li key={transaction.id} className="mb-3 p-4 bg-white rounded-md shadow">
+              <p>{transaction.description} - {transaction.type}</p>
+              <p>${transaction.amount} - {transaction.category} on {new Date(transaction.createdAt.seconds * 1000).toLocaleString()}</p>
+              <button
+                onClick={() => deleteTransaction(transaction.id)}
+                className="bg-red-500 text-white py-1 px-3 rounded-md"
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
+
+      <button
+        onClick={logout}
+        className="mt-6 bg-gray-500 text-white py-2 px-4 rounded-md"
+      >
+        Logout
+      </button>
     </div>
   );
 };
