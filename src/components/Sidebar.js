@@ -71,13 +71,15 @@ const Sidebar = ({ user }) => {
                 History
               </Link>
             </li>
-            {user && (
-              <li>
-                <button onClick={handleLogout} className="hover:underline">
-                  Logout
-                </button>
-              </li>
-            )}
+            
+      {user && (
+        <button
+          onClick={handleLogout}
+          className="mt-6 bg-gray-500 text-white py-2 px-4 rounded-md"
+        >
+          Logout
+        </button>
+      )}
           </ul>
         </div>
       </div>

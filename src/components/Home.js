@@ -1,4 +1,3 @@
-// Home.js
 import { useEffect, useState } from "react";
 import { collection, addDoc, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../firebase"; // Ensure the path to firebase.js is correct
@@ -24,7 +23,6 @@ const Home = ({ user }) => {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
   const [salary, setSalary] = useState("");
-  const [showForm, setShowForm] = useState(false); // State to toggle form visibility
 
   useEffect(() => {
     if (!user) {
@@ -91,7 +89,6 @@ const Home = ({ user }) => {
       setDate("");
       setType("Expense");
       setSalary("");
-      setShowForm(false); // Hide form after submission
     } catch (error) {
       console.error("Error adding transaction:", error);
     }
@@ -153,84 +150,67 @@ const Home = ({ user }) => {
       </div>
 
       <div className="max-w-xl mx-auto py-8">
-        {user && !showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="mb-4 bg-blue-500 text-white py-2 px-4 rounded-md"
-          >
-            Add Transaction
-          </button>
-        )}
-
-        {showForm && (
-          <>
-            <button
-              onClick={() => setShowForm(false)}
-              className="mb-4 bg-red-500 text-white py-2 px-4 rounded-md"
+        {user && (
+          <form onSubmit={addTransaction} className="mb-6">
+            {type === "Income" ? (
+              <>
+                <input
+                  type="number"
+                  value={salary}
+                  onChange={(e) => setSalary(e.target.value)}
+                  placeholder="Salary (e.g., 5000)"
+                  className="w-full p-2 mb-3 border rounded-md"
+                />
+              </>
+            ) : (
+              <>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Amount (e.g., 50)"
+                  className="w-full p-2 mb-3 border rounded-md"
+                />
+              </>
+            )}
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Description (e.g., Lunch)"
+              className="w-full p-2 mb-3 border rounded-md"
+            />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full p-2 mb-3 border rounded-md"
+            />
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-2 mb-3 border rounded-md"
             >
-              Close Form
+              <option value="Food">Food</option>
+              <option value="Transport">Transport</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Other">Other</option>
+            </select>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full p-2 mb-3 border rounded-md"
+            >
+              <option value="Expense">Expense</option>
+              <option value="Income">Income</option>
+            </select>
+            <button
+              type="submit"
+              className="w-full bg-green-500 text-white py-2 rounded-md"
+            >
+              Add Transaction
             </button>
-            <form onSubmit={addTransaction} className="mb-6">
-              {type === "Income" ? (
-                <>
-                  <input
-                    type="number"
-                    value={salary}
-                    onChange={(e) => setSalary(e.target.value)}
-                    placeholder="Salary (e.g., 5000)"
-                    className="w-full p-2 mb-3 border rounded-md"
-                  />
-                </>
-              ) : (
-                <>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Amount (e.g., 50)"
-                    className="w-full p-2 mb-3 border rounded-md"
-                  />
-                </>
-              )}
-              <input
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Description (e.g., Lunch)"
-                className="w-full p-2 mb-3 border rounded-md"
-              />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2 mb-3 border rounded-md"
-              />
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-2 mb-3 border rounded-md"
-              >
-                <option value="Food">Food</option>
-                <option value="Transport">Transport</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Other">Other</option>
-              </select>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="w-full p-2 mb-3 border rounded-md"
-              >
-                <option value="Expense">Expense</option>
-                <option value="Income">Income</option>
-              </select>
-              <button
-                type="submit"
-                className="w-full bg-green-500 text-white py-2 rounded-md"
-              >
-                Add Transaction
-              </button>
-            </form>
-          </>
+          </form>
         )}
 
         <h2 className="text-2xl font-semibold mb-4">Transactions</h2>
@@ -250,12 +230,6 @@ const Home = ({ user }) => {
         </ul>
       </div>
 
-      <button
-        onClick={logout}
-        className="mt-6 bg-gray-500 text-white py-2 px-4 rounded-md"
-      >
-        Logout
-      </button>
     </div>
   );
 };
