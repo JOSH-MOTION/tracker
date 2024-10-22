@@ -5,6 +5,8 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Sidebar from "./components/Sidebar"; // Import the Sidebar component
 import { auth } from "./firebase";
+import History from "./components/History";
+import About from "./components/About";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -25,6 +27,8 @@ function App() {
           <Route path="/" element={user ? <Home user={user} /> : <Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </div>
     </Router>
