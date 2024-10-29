@@ -39,22 +39,18 @@ const Home = ({ user }) => {
     <div className="min-h-screen p-6 bg-gray-100 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-4">Welcome, {user ? user.email : "Guest"}</h1>
 
-      <div className="flex w-full">
-        {/* Chart on the left side */}
-        <div className="flex-1 mr-4">
-          <Chart 
-            transactions={transactions}
-            totalIncome={totalIncome}
-            totalExpenses={totalExpenses}
-          />
-        </div>
+      {/* Chart displaying total income and expenses */}
+      <Chart 
+        transactions={transactions}
+        totalIncome={totalIncome}
+        totalExpenses={totalExpenses}
+      />
 
-        {/* Transaction Form and Summary on the right side */}
-        <div className="flex-1">
-          <TransactionForm user={user} />
-          <TransactionSummary transactions={transactions} />
-        </div>
-      </div>
+      {/* Transaction Form for adding new transactions */}
+      <TransactionForm user={user} />
+
+      {/* Summary of transactions */}
+      <TransactionSummary transactions={transactions} />
     </div>
   );
 };
